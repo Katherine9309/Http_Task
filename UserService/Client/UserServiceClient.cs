@@ -16,7 +16,7 @@ namespace UserService.Client
         private readonly HttpClient _httpClient = new HttpClient();
         private readonly string _baseUrl = " https://userservice-uat.azurewebsites.net";
 
-        public async Task<CommonResponse<object>> CreateUser(RegisterUserRequest request)
+        public async Task<CommonResponse<int>> CreateUser(RegisterUserRequest request)
         {
             var httpRequestMessage = new HttpRequestMessage
             {
@@ -27,7 +27,7 @@ namespace UserService.Client
 
             HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage);
 
-            return await response.ToCommonResponse<object>();
+            return await response.ToCommonResponse<int>();
 
         }
 
