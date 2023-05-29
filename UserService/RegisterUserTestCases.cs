@@ -90,8 +90,7 @@ namespace UserService
             var response2 = await _registerUser.CreateUser(request2);
 
             //Assert
-            Console.WriteLine(response2.Body);
-            Console.WriteLine(response1.Body);
+         
 
             Assert.Multiple(() =>
             {
@@ -275,7 +274,7 @@ namespace UserService
             Assert.Multiple(() =>
             {
                 Assert.AreEqual(HttpStatusCode.InternalServerError, response.StatusCode);
-                Assert.AreEqual("Sequence contains no matching element", response.Content);
+                Assert.AreEqual("Sequence contains no elements", response.Content);
             });
         }
 

@@ -5,14 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserService.Models.Requests
+namespace WalletService.Models.Requests
 {
-    public class RegisterUserRequest
+    public class ChargeRequest
     {
-        [JsonProperty("firstName")]
-        public string FirstName;
+       
+            [JsonProperty("userId")]
+            public int UserId;
 
-        [JsonProperty("lastName")]
-        public string LastName;
+            [JsonProperty("amount")]
+            public double Amount;
+        
     }
 }

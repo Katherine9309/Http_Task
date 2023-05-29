@@ -7,7 +7,7 @@ using UserService.Models.Requests;
 
 namespace UserService.Utils
 {
-    internal class UserGenerator
+    public class UserGenerator
     {
         public RegisterUserRequest GenerateCreateUserRequest()
         {
@@ -23,8 +23,8 @@ namespace UserService.Utils
         {
             return new RegisterUserRequest()
             {
-                FirstName = firstName,
-                LastName = lastName,
+                FirstName = firstName ?? "",
+                LastName = lastName ?? "",
             };
         }
 
@@ -50,7 +50,7 @@ namespace UserService.Utils
 
         public int GenerateId() {
             Random random = new Random();
-            int randomNumber = random.Next(10000,10000000);
+            int randomNumber = random.Next(0,10000000);
             return randomNumber;
         } 
 

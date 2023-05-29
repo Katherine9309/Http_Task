@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserService", "UserService\UserService.csproj", "{10E24F14-7A7F-4153-A43A-6F4087A2E0EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserService", "UserService\UserService.csproj", "{10E24F14-7A7F-4153-A43A-6F4087A2E0EC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletService", "WalletService\WalletService.csproj", "{25800D11-C1E8-4088-94F1-399AAC961B25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{10E24F14-7A7F-4153-A43A-6F4087A2E0EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10E24F14-7A7F-4153-A43A-6F4087A2E0EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10E24F14-7A7F-4153-A43A-6F4087A2E0EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25800D11-C1E8-4088-94F1-399AAC961B25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25800D11-C1E8-4088-94F1-399AAC961B25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25800D11-C1E8-4088-94F1-399AAC961B25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25800D11-C1E8-4088-94F1-399AAC961B25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
