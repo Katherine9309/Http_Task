@@ -29,7 +29,7 @@ namespace WalletService.Client
    
      }
 
-       public async Task <CommonResponse<object>> RevertTransaction(Guid userId)
+       public async Task <CommonResponse<Guid>> RevertTransaction(Guid userId)
        {
            var getUserStatusRequest = new HttpRequestMessage
            {
@@ -39,7 +39,7 @@ namespace WalletService.Client
  
            HttpResponseMessage response = await _httpClient.SendAsync(getUserStatusRequest);
  
-           return await response.ToCommonResponse<object>();
+           return await response.ToCommonResponse<Guid>();
        }
 
         public async Task<CommonResponse<object>> GetBalance(int userId)
@@ -56,17 +56,17 @@ namespace WalletService.Client
         }
 
 
-       // public async Task<CommonResponse<object>> DeleteUser(int userId)
-       // {
-       //     var getProductInfoRequest = new HttpRequestMessage
-       //     {
-       //         Method = HttpMethod.Delete,
-       //         RequestUri = new Uri($"{_baseUrl}/Register/DeleteUser?userId={userId}")
-       //     };
-       //
-       //     HttpResponseMessage response = await _httpClient.SendAsync(getProductInfoRequest);
-       //
-       //     return await response.ToCommonResponse<object>();
-       // }
+        public async Task<CommonResponse<object>> GetTransactions(int userId)
+        {
+            var getProductInfoRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"{_baseUrl}/Balance/GetTransactions?userId={userId}")
+            };
+       
+            HttpResponseMessage response = await _httpClient.SendAsync(getProductInfoRequest);
+       
+            return await response.ToCommonResponse<object>();
+        }
     }
 }
