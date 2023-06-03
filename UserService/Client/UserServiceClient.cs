@@ -8,6 +8,7 @@ using UserService.CatalogTests.Models.Responses;
 using UserService.Models.Requests;
 using UserService.Models.Responses;
 using UserService.Utils;
+using static UserService.SetUpFixture;
 
 namespace UserService.Client
 {
@@ -27,7 +28,13 @@ namespace UserService.Client
 
             HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage);
 
-            return await response.ToCommonResponse<int>();
+            var finalResponse = await response.ToCommonResponse<int>();
+
+            if (response.IsSuccessStatusCode)
+                TestDataStorage.Add(finalResponse.Body);
+                Console.WriteLine(finalResponse.Body);
+
+            return finalResponse;
 
         }
 

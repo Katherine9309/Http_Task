@@ -95,7 +95,7 @@ namespace UserService
             Assert.Multiple(() =>
             {
                 Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode);
-                Assert.IsTrue(Convert.ToInt32(response2.Body) == Convert.ToInt32(response1.Body) + 1);
+                Assert.IsTrue(response2.Body == response1.Body + 1);
 
             });
         }
@@ -135,7 +135,7 @@ namespace UserService
             var response = await _registerUser.CreateUser(request);
 
             //Action
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            var response2 = await _registerUser.GetUserStatus(response.Body);
             Console.WriteLine(response2.Body);
             Console.WriteLine(response2.Content);
             //Assert
@@ -152,7 +152,7 @@ namespace UserService
 
             //Action
             await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            var response2 = await _registerUser.GetUserStatus(response.Body);
             Console.WriteLine(response2.Body);
             Console.WriteLine(response2.Content);
 
@@ -187,10 +187,10 @@ namespace UserService
             //precondition
 
             var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
+            await _registerUser.SetUserStatus(response.Body, true);
             //Action
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), false);
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            await _registerUser.SetUserStatus(response.Body, false);
+            var response2 = await _registerUser.GetUserStatus(response.Body);
 
 
             //Assert
@@ -204,11 +204,11 @@ namespace UserService
             //precondition
 
             var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), false);
+            await _registerUser.SetUserStatus(response.Body, true);
+            await _registerUser.SetUserStatus(response.Body, false);
             //Action
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            await _registerUser.SetUserStatus(response.Body, true);
+            var response2 = await _registerUser.GetUserStatus(response.Body);
 
 
             //Assert
@@ -225,8 +225,8 @@ namespace UserService
             var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
 
             //Action
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), false);
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            await _registerUser.SetUserStatus(response.Body, false);
+            var response2 = await _registerUser.GetUserStatus(response.Body);
 
 
             //Assert
@@ -240,11 +240,11 @@ namespace UserService
             //precondition
 
             var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
+            await _registerUser.SetUserStatus(response.Body, true);
 
             //Action
-            await _registerUser.SetUserStatus(Convert.ToInt32(response.Body), true);
-            var response2 = await _registerUser.GetUserStatus(Convert.ToInt32(response.Body));
+            await _registerUser.SetUserStatus(response.Body, true);
+            var response2 = await _registerUser.GetUserStatus(response.Body);
 
 
             //Assert
@@ -265,16 +265,18 @@ namespace UserService
         public async Task DeleteUser_DeleteNotExistingUser_StatusIsNotFound()
         {
             //precondition
-            var id = _userGenerator.GenerateId();
+          
+            var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
 
             //Action
-            var response = await _registerUser.DeleteUser(id);
+            await _registerUser.DeleteUser(response.Body);
+            var response2 = await _registerUser.DeleteUser(response.Body);
 
             //Assert
             Assert.Multiple(() =>
             {
-                Assert.AreEqual(HttpStatusCode.InternalServerError, response.StatusCode);
-                Assert.AreEqual("Sequence contains no elements", response.Content);
+                Assert.AreEqual(HttpStatusCode.InternalServerError, response2.StatusCode);
+                Assert.AreEqual("Sequence contains no elements", response2.Content);
             });
         }
 
@@ -285,7 +287,7 @@ namespace UserService
             var response = await _registerUser.CreateUser(_userGenerator.GenerateCreateUserRequest());
 
             //Action
-            var response2 = await _registerUser.DeleteUser(Convert.ToInt32(response.Body));
+            var response2 = await _registerUser.DeleteUser(response.Body);
 
             //Assert
           
