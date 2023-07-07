@@ -8,7 +8,7 @@ using WalletService.Models.Requests;
 
 namespace WalletService.Utils
 {
-    internal class WalletGenerator
+    public class WalletGenerator
     {
         
      

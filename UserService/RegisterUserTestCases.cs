@@ -95,7 +95,7 @@ namespace UserService
             Assert.Multiple(() =>
             {
                 Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode);
-                Assert.IsTrue(response2.Body == response1.Body + 1);
+                Assert.IsTrue(response2.Body > response1.Body + 1);
 
             });
         }

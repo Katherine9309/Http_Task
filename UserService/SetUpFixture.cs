@@ -37,7 +37,7 @@ namespace UserService
             public static IEnumerable<int> GetAllIds()
             {
 
-                return _storage.ToArray();
+               return _storage.ToArray();
             }
         }
     }

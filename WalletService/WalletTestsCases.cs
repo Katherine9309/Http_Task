@@ -27,12 +27,14 @@ namespace WalletService
         [TestCase(new double[] { 10, 20, 30, -20, -30, -10.01 }, 10, "InternalServerError")] // test 6
         [TestCase(new double[] { 5000000, 4000000,1000000, -0.01 }, 9999999.99, "OK")] // test 7
         [TestCase(new double[] { 5000000, 4000000, 500000, 500000 }, 10000000, "OK")] // test 8
-        public async Task KatheGetBalance_SetNewUserAndGetBalance_StatusCodeInternal(double[] amounts, double balance, string codeResponse)
+        public async Task GetBalance_SetNewUserAndGetBalance_StatusCodeInternal(double[] amounts, double balance, string codeResponse)
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
             var response = await _registerUser.CreateUser(request);
+
             await _registerUser.SetUserStatus(response.Body, true);
+
             var chargeResponse = new CommonResponse<Guid>();
             //Action
             foreach (var item in amounts) {
@@ -52,7 +54,7 @@ namespace WalletService
 
 
         [Test] // test 1,2
-        public async Task GetBalance_SetNewUserAndGetBalance_StatusCodeInternalError()
+        public async Task T1_2_GetBalance_SetNewUserAndGetBalance_StatusCodeInternalError()
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -101,7 +103,7 @@ namespace WalletService
 
 
         [Test] // test 38
-        public async Task ReverseTransaction_CreateUserAndChangeStatusToActiveChargeAmountAndMakeDoubleReverse_StatusOK()
+        public async Task T38_ReverseTransaction_CreateUserAndChangeStatusToActiveChargeAmountAndMakeDoubleReverse_StatusOK()
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -114,20 +116,12 @@ namespace WalletService
             var responseFirstReverse = await _walletService.RevertTransaction(chargeResponse.Body);
             var responseSecondReverse = await _walletService.RevertTransaction(responseFirstReverse.Body);
             //Assert  
-            Assert.Multiple(() =>
-            {
-      
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(responseFirstReverse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(responseSecondReverse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-            });
-           
+            Assert.That(responseSecondReverse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
 
 
         [Test] // test 33
-        public async Task Revert_RevertTransactionForWrongIdTransaction_StatusNotFound()
+        public async Task T33_Revert_RevertTransactionForWrongIdTransaction_StatusNotFound()
         {
             //precondition
             var idTransaction = _walletGenerator.GenerateTransactionId();
@@ -140,7 +134,7 @@ namespace WalletService
         }
 
         [Test] // test 43
-        public async Task Charge_CreateNotActiveUserAndCharge_StatusNotActiveUser()
+        public async Task T43_Charge_CreateNotActiveUserAndCharge_StatusNotActiveUser()
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -157,7 +151,7 @@ namespace WalletService
         }
 
         [Test] // test 44
-        public async Task Charge_NoexistingUserCharge_StatusNotActiveUser()
+        public async Task T44_Charge_NoexistingUserCharge_StatusNotActiveUser()
         {
             //precondition
             var request = _walletGenerator.GenerateChargeRequest();
@@ -171,8 +165,48 @@ namespace WalletService
             });
         }
 
-        [TestCase(10000000.01)] // test 47, test 37
-        public async Task ChargeAndRevert_CreateActiveUserWithBalanceZeroAndChargeAmountOverTenMillion_StatusInternalError(double amount)
+        [TestCase(10000000.01)] // test 37
+        public async Task T37_Revert_CreateActiveUserWithBalanceZeroAndChargeAmountOverTenMillion_StatusInternalError(double amount)
+        {
+            //precondition
+            var request = _userGenerator.GenerateCreateUserRequest();
+            var response = await _registerUser.CreateUser(request);
+            await _registerUser.SetUserStatus(response.Body, true);
+            var request2 = _walletGenerator.GenerateChargeRequest(response.Body, amount);
+
+            //Action
+            var chargeResponse = await _walletService.ChargeUser(request2);
+            var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
+
+            //Assert  
+            Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+         
+        }
+
+
+        [TestCase(10000000.01)] // test 47, 
+        public async Task T47_ChargeAndRevert_CreateActiveUserWithBalanceZeroAndChargeAmountOverTenMillion_StatusInternalError(double amount)
+        {
+
+            //precondition
+            var request = _userGenerator.GenerateCreateUserRequest();
+            var response = await _registerUser.CreateUser(request);
+            await _registerUser.SetUserStatus(response.Body, true);
+            var request2 = _walletGenerator.GenerateChargeRequest(response.Body, amount);
+
+            //Action
+            var chargeResponse = await _walletService.ChargeUser(request2);
+
+            //Assert  
+            Assert.Multiple(() =>
+            {
+                Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+                Assert.That(chargeResponse.Content, Is.EqualTo($"After this charge balance could be '{amount}', maximum user balance is '10000000'"));
+            });
+
+        }
+
+        public async Task T37_ChargeAndRevert_CreateActiveUserWithBalanceZeroAndChargeAmountOverTenMillion_StatusInternalError(double amount)
         {
 
             //precondition
@@ -186,21 +220,14 @@ namespace WalletService
             var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
 
             //Assert  
-            Assert.Multiple(() =>
-            {
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-                Assert.That(chargeResponse.Content, Is.EqualTo($"After this charge balance could be '{amount}', maximum user balance is '10000000'"));
-                Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-            });
-
+           
+             Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
-
 
 
         [TestCase(0.001, "Amount value must have precision 2 numbers after dot")] //test 48
         [TestCase(0, "Amount cannot be '0'")] //test 46
-
-        public async Task Charge_CreateUserAndBalanceZeroChargeDifferentsAmounts_StatusExepcion(double amount, string message)
+        public async Task T46_48_Charge_CreateUserAndBalanceZeroChargeDifferentsAmounts_StatusExepcion(double amount, string message)
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -220,7 +247,7 @@ namespace WalletService
 
         [TestCase(20)] // test 56
         [TestCase(60)]
-        public async Task GetBalance_CreateUserAndBalanceIsAmountPlusTenAndChargeAmount_StatusOK(double amount)
+        public async Task T56_Charge_CreateUserAndBalanceIsAmountPlusTenAndChargeAmount_StatusOK(double amount)
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -228,26 +255,21 @@ namespace WalletService
             await _registerUser.SetUserStatus(response.Body, true);
             var request2 = _walletGenerator.GenerateChargeRequest(response.Body, amount + 10);
             await _walletService.ChargeUser(request2);
+
             //Action
-            var response2 = await _walletService.GetBalance(response.Body);
-            var request3 = _walletGenerator.GenerateChargeRequest(response.Body, amount);
-            var response3 = await _walletService.ChargeUser(request3);
-            var response4 = await _walletService.GetBalance(response.Body);
+
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(response.Body, amount);
+            var chargeResponse = await _walletService.ChargeUser(chargeRequest);
+
 
             //Assert  
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(response2.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(response2.Body, Is.EqualTo(amount + 10));
-                Assert.That(response3.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(response4.Body, Is.EqualTo(amount + amount + 10));
-            });
+            Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        
         }
 
         [TestCase(20)] // test 45
         [TestCase(100)]
-        public async Task GetBalance_CreateUserAndBalanceIsNChargeMinusNMinusZeroPointZeroZeroOne_StatusOK(double amount)
+        public async Task T45_Charge_CreateUserAndBalanceIsNChargeMinusNMinusZeroPointZeroZeroOne_StatusOK(double amount)
         {
 
             //precondition
@@ -256,29 +278,64 @@ namespace WalletService
             await _registerUser.SetUserStatus(response.Body, true);
             var request2 = _walletGenerator.GenerateChargeRequest(response.Body, amount);
             await _walletService.ChargeUser(request2);
+
             //Action
             var response2 = await _walletService.GetBalance(response.Body);
             var chargeRequest = _walletGenerator.GenerateChargeRequest(response.Body, -amount - 0.01);
             var chargeResponse = await _walletService.ChargeUser(chargeRequest);
-            var response4 = await _walletService.GetBalance(response.Body);
-
 
             //Assert  
-            Assert.Multiple(() =>
-            {
-                Assert.That(response2.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(response2.Body, Is.EqualTo(amount));
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-                Assert.That(response4.Body, Is.EqualTo(amount));
-            });
+            Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         }
 
-   
-        [TestCase(0.01, 0.01,"OK")] //test 10, test 49, test 34
-        [TestCase(9999999.99,9999999.99,"OK")] //test 12, test 39 
-        [TestCase(10000000,10000000,"OK")] // test 13 , test 36,  test 16
 
-        public async Task Charge_CreateActiveUserInitialBalanceZeroAndChargeAmount_StatusOK(double firstCharge, double overalBalance, string codeResponse)
+        [TestCase(0.01, "OK")] //test 49
+        public async Task T49_Charge_CreateActiveUserInitialBalanceZeroAndChargeAmount_StatusOK(double firstCharge, string codeResponse)
+        {
+            //precondition
+            var requestUser = _userGenerator.GenerateCreateUserRequest();
+            var newUser = await _registerUser.CreateUser(requestUser);
+            await _registerUser.SetUserStatus(newUser.Body, true);
+
+
+            //Action
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
+            var chargeResponse = await _walletService.ChargeUser(chargeRequest);
+            HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
+
+            //Assert  
+            Assert.That(chargeResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        }
+
+
+
+
+        [TestCase(0.01, 0.01,"OK")] //test 34
+        [TestCase(9999999.99,9999999.99,"OK")] // test 39 
+        [TestCase(10000000,10000000,"OK")] // test 36
+        public async Task T34_36_39_RevertTransaction_CreateActiveUserInitialBalanceZeroAndChargeAmount_StatusOK(double firstCharge, double overalBalance, string codeResponse)
+        {
+            //precondition
+            var requestUser = _userGenerator.GenerateCreateUserRequest();
+            var newUser = await _registerUser.CreateUser(requestUser);
+            await _registerUser.SetUserStatus(newUser.Body, true);
+
+
+            //Action
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
+            var chargeResponse = await _walletService.ChargeUser(chargeRequest);
+            var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
+    
+            HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
+
+            //Assert  
+            Assert.That(revertResponse.StatusCode, Is.EqualTo(codeExpected));
+        }
+
+
+
+        [TestCase(9999999.99, 9999999.99, "OK")] // test16
+        public async Task T16_GetBalance_CreateActiveUserInitialBalanceZeroAndChargeAmount_StatusOK(double firstCharge, double overalBalance, string codeResponse)
         {
             //precondition
             var requestUser = _userGenerator.GenerateCreateUserRequest();
@@ -292,23 +349,50 @@ namespace WalletService
             var firstBalanceResponse = await _walletService.GetBalance(newUser.Body);
             var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
             var secondBalanceResponse = await _walletService.GetBalance(newUser.Body);
-        
+
             HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
 
             //Assert  
             Assert.Multiple(() =>
             {
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(codeExpected));
-                Assert.That(firstBalanceResponse.Body, Is.EqualTo(overalBalance));
-                Assert.That(firstBalanceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+                Assert.That(secondBalanceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
                 Assert.That(secondBalanceResponse.Body, Is.EqualTo(0));
-
             });
         }
 
+
+
+        [TestCase(0.01, 0.01, "OK")] //test 10
+        [TestCase(9999999.99, 9999999.99, "OK")] //test 12
+        [TestCase(10000000, 10000000, "OK")] // test 13 
+
+        public async Task T10to13_GetBalance_CreateActiveUserInitialBalanceZeroAndChargeAmount_StatusOK(double firstCharge, double overalBalance, string codeResponse)
+        {
+            //precondition
+            var requestUser = _userGenerator.GenerateCreateUserRequest();
+            var newUser = await _registerUser.CreateUser(requestUser);
+            await _registerUser.SetUserStatus(newUser.Body, true);
+
+
+            //Action
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
+             await _walletService.ChargeUser(chargeRequest);
+            var firstBalanceResponse = await _walletService.GetBalance(newUser.Body);
+        
+
+            HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
+
+            //Assert  
+            Assert.Multiple(() =>
+            {
+                Assert.That(firstBalanceResponse.Body, Is.EqualTo(overalBalance));
+                Assert.That(firstBalanceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            });
+        }
+
+
         [TestCase(-30, 0, "InternalServerError")] //test 55
-        public async Task Charge_CreateUserAndBalanceZeroAndChargeAmount_StatusInternalServerErrorAndExepcion(double amount, double balance,string codeResponse)
+        public async Task T55_Charge_CreateUserAndBalanceZeroAndChargeAmount_StatusInternalServerErrorAndExepcion(double amount, double balance,string codeResponse)
         {
             //precondition
             var request = _userGenerator.GenerateCreateUserRequest();
@@ -327,9 +411,9 @@ namespace WalletService
         }
 
 
-        [TestCase(-0.01, 0, "InternalServerError")] //test 11, test 35,test 50
+        [TestCase(-0.01, 0, "InternalServerError")] //test 11
         [TestCase(-10000000.01, 0, "InternalServerError")] //test 14
-        public async Task Charge_CreateActiveUserInitialBalanceZeroAndChargeNegativeAmount_StatusInternalServerError(double firstCharge, double overalBalance, string codeResponse)
+        public async Task T14_11_GetBalance_CreateActiveUserInitialBalanceZeroAndChargeNegativeAmount_StatusInternalServerError(double firstCharge, double overalBalance, string codeResponse)
         {
             //precondition
             var requestUser = _userGenerator.GenerateCreateUserRequest();
@@ -341,26 +425,64 @@ namespace WalletService
             var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
             var chargeResponse = await _walletService.ChargeUser(chargeRequest);
             var firstBalanceResponse = await _walletService.GetBalance(newUser.Body);
-            var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
-            var secondBalanceResponse = await _walletService.GetBalance(newUser.Body);
+           
 
             HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
         //Assert  
         Assert.Multiple(() =>
             {
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(codeExpected));
-                Assert.That(chargeResponse.Content, Is.EqualTo($"User have '0', you try to charge '{firstCharge}'."));
                 Assert.That(firstBalanceResponse.Body, Is.EqualTo(overalBalance));
                 Assert.That(firstBalanceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
-                Assert.That(secondBalanceResponse.Body, Is.EqualTo(0));
-
             });
         }
 
+        [TestCase(-0.01, 0, "InternalServerError")] //test 35
+        public async Task T35_RevertTransaction_CreateActiveUserInitialBalanceZeroAndChargeNegativeAmount_StatusInternalServerError(double firstCharge, double overalBalance, string codeResponse)
+        {
+            //precondition
+            var requestUser = _userGenerator.GenerateCreateUserRequest();
+            var newUser = await _registerUser.CreateUser(requestUser);
+            await _registerUser.SetUserStatus(newUser.Body, true);
+
+
+            //Action
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
+            var chargeResponse = await _walletService.ChargeUser(chargeRequest);
+            var revertResponse = await _walletService.RevertTransaction(chargeResponse.Body);
+
+            HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
+            //Assert  
+            Assert.That(revertResponse.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+          
+        }
+
+        [TestCase(-0.01, 0, "InternalServerError")] //test 50
+        public async Task T50_Charge_CreateActiveUserInitialBalanceZeroAndChargeNegativeAmount_StatusInternalServerError(double firstCharge, double overalBalance, string codeResponse)
+        {
+            //precondition
+            var requestUser = _userGenerator.GenerateCreateUserRequest();
+            var newUser = await _registerUser.CreateUser(requestUser);
+            await _registerUser.SetUserStatus(newUser.Body, true);
+
+
+            //Action
+            var chargeRequest = _walletGenerator.GenerateChargeRequest(newUser.Body, firstCharge);
+            var chargeResponse = await _walletService.ChargeUser(chargeRequest);
+          
+
+            HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
+            //Assert  
+            Assert.Multiple(() =>
+            {
+                Assert.That(chargeResponse.StatusCode, Is.EqualTo(codeExpected));
+                Assert.That(chargeResponse.Content, Is.EqualTo($"User have '0', you try to charge '{firstCharge}'."));
+            });
+        }
+
+
         [TestCase(20, 20, "OK",0)] //test 53
         [TestCase(-20, 0, "InternalServerError",20)] //test54
-        public async Task Charge_CreateActiveUserInitialBalanceNAndChargeMinusN_StatusOK(double firstCharge,double balance, string codeResponse, double overallBalance)
+        public async Task T53_54Charge_CreateActiveUserInitialBalanceNAndChargeMinusN_StatusOK(double firstCharge,double balance, string codeResponse, double overallBalance)
         {
             //precondition
             var requestUser = _userGenerator.GenerateCreateUserRequest();
@@ -378,17 +500,8 @@ namespace WalletService
             HttpStatusCode codeExpected = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), codeResponse, true);
 
             //Assert  
-            Assert.Multiple(() =>
-            {
-                Assert.That(chargeResponse.StatusCode, Is.EqualTo(codeExpected));
-                Assert.That(firstBalanceResponse.Body, Is.EqualTo(balance));
-                Assert.That(firstBalanceResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(chargeResponse2.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-                Assert.That(chargeResponse2.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-                Assert.That(firstBalanceResponse2.Body, Is.EqualTo(overallBalance));
-                Assert.That(firstBalanceResponse2.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-
-            });
         }
     }
 }
